@@ -383,6 +383,7 @@
             trackerData.days.push(dayData);
             trackerData.currentDay++;
             saveData();
+            renderTracker();
         }
 
         function renderTracker() {
@@ -474,6 +475,7 @@
             trackerData.days[dayIndex][person][task] = !trackerData.days[dayIndex][person][task];
             calculatePenalties(dayIndex);
             saveData();
+            renderTracker();
         }
 
         function calculatePenalties(dayIndex) {
@@ -551,6 +553,7 @@
                 });
                 trackerData.currentDay = trackerData.days.length;
                 saveData();
+                renderTracker();
             }
         }
     </script>

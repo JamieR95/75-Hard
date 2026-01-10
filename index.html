@@ -142,6 +142,18 @@
             transform: scale(1.05);
         }
         
+        .task-item.disabled {
+            background: #e9ecef;
+            opacity: 0.6;
+            text-decoration: line-through;
+            cursor: not-allowed;
+        }
+        
+        .task-item.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
         .tasks-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -279,12 +291,12 @@
             diet: [
                 "No sweets/chocolate/energy drinks/crisps/fast food",
                 "3 liters of water",
-                "Jamie: 3 meals max"
+                "Jamie: 3 meals max + stay under calorie goal"
             ],
             activities: [
                 "Read 30 mins",
                 "Progress pic",
-                "Study 2hrs (app)"
+                "Study 2hrs"
             ]
         };
 
@@ -402,17 +414,28 @@
             const isChecked = dayData[person][task];
             const taskId = `${person}-${dayIndex}-${task.replace(/\s+/g, '-')}`;
             
+            // Check if this is an active rest day and if task should be disabled
+            const isActiveRestDay = dayData[person]['Active rest day'];
+            const shouldDisable = isActiveRestDay && (task === 'Hard exercise session' || task === 'Light exercise session');
+            
             return `
-                <div class="task-item ${isChecked ? 'completed' : ''}" onclick="document.getElementById('${taskId}').click()">
-                    <input type="checkbox" id="${taskId}" ${isChecked ? 'checked' : ''} 
+                <div class="task-item ${isChecked ? 'completed' : ''} ${shouldDisable ? 'disabled' : ''}" 
+                     onclick="${shouldDisable ? '' : `document.getElementById('${taskId}').click()`}">
+                    <input type="checkbox" id="${taskId}" 
+                           ${isChecked ? 'checked' : ''} 
+                           ${shouldDisable ? 'disabled' : ''}
                            onchange="toggleTask('${person}', '${task}', ${dayIndex}); event.stopPropagation();">
-                    <label for="${taskId}">${task}</label>
+                    <label for="${taskId}">${task}${shouldDisable ? ' (Rest Day)' : ''}</label>
                 </div>
             `;
         }
 
         function toggleTask(person, task, dayIndex) {
             trackerData.days[dayIndex][person][task] = !trackerData.days[dayIndex][person][task];
+            
+            // Active rest day logic is now handled in calculatePenalties
+            // The visual disabled state is handled in createTaskCheckbox
+            
             calculatePenalties(dayIndex);
             saveData();
             renderTracker();
@@ -423,11 +446,19 @@
             
             ['toby', 'jamie'].forEach(person => {
                 let failures = 0;
+                const isActiveRestDay = dayData[person]['Active rest day'];
+                
                 Object.keys(dayData[person]).forEach(task => {
                     // Skip Active rest day - it's optional (1x per week)
                     if (task === 'Active rest day') {
                         return;
                     }
+                    
+                    // On active rest days, don't count hard/light exercise as failures
+                    if (isActiveRestDay && (task === 'Hard exercise session' || task === 'Light exercise session')) {
+                        return;
+                    }
+                    
                     if (!dayData[person][task]) {
                         failures++;
                     }
@@ -497,11 +528,6 @@
             }
         }
 
-        // Initialize
-        loadData();
-    </script>
-</body>
-</html>
         // Initialize
         loadData();
     </script>

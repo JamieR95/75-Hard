@@ -126,6 +126,22 @@
             color: #dc3545;
         }
         
+        .delete-day-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .delete-day-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
         .tasks-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -224,6 +240,7 @@
 <body>
     <div class="container">
         <h1>🏆 75 Days Challenge: Toby vs Jamie</h1>
+        <p class="subtitle">Track your daily progress and stay accountable!</p>
         
         <div class="stats">
             <div class="stat-card">
@@ -321,8 +338,9 @@
                     <div class="day-entry">
                         <div class="day-header">
                             <span class="day-number">Day ${dayData.day}</span>
-                            <div>
+                            <div style="display: flex; gap: 15px; align-items: center;">
                                 <span class="daily-penalty">Toby: €${dayData.tobyPenalty} | Jamie: €${dayData.jamiePenalty}</span>
+                                <button class="delete-day-btn" onclick="deleteDay(${index})">🗑️ Delete</button>
                             </div>
                         </div>
                         
@@ -455,6 +473,19 @@
             a.href = url;
             a.download = '75-days-challenge-tracker.csv';
             a.click();
+        }
+
+        function deleteDay(index) {
+            if (confirm(`Are you sure you want to delete Day ${trackerData.days[index].day}? This cannot be undone.`)) {
+                trackerData.days.splice(index, 1);
+                // Recalculate day numbers
+                trackerData.days.forEach((day, i) => {
+                    day.day = i + 1;
+                });
+                trackerData.currentDay = trackerData.days.length + 1;
+                saveData();
+                renderTracker();
+            }
         }
 
         // Initialize

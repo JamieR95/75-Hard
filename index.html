@@ -306,8 +306,13 @@
 
             Object.keys(tasks).forEach(category => {
                 tasks[category].forEach(task => {
-                    dayData.toby[task] = false;
-                    dayData.jamie[task] = false;
+                    // Skip Jamie-specific task for Toby
+                    if (task.includes('Jamie:')) {
+                        dayData.jamie[task] = false;
+                    } else {
+                        dayData.toby[task] = false;
+                        dayData.jamie[task] = false;
+                    }
                 });
             });
 
@@ -419,7 +424,11 @@
             ['toby', 'jamie'].forEach(person => {
                 let failures = 0;
                 Object.keys(dayData[person]).forEach(task => {
-                    if (!dayData[person][task] && task !== 'Active rest day') {
+                    // Skip Active rest day - it's optional (1x per week)
+                    if (task === 'Active rest day') {
+                        return;
+                    }
+                    if (!dayData[person][task]) {
                         failures++;
                     }
                 });
@@ -488,6 +497,11 @@
             }
         }
 
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>
         // Initialize
         loadData();
     </script>

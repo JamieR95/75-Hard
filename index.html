@@ -240,11 +240,12 @@
 <body>
     <div class="container">
         <h1>🏆 75 Days Challenge: Toby vs Jamie</h1>
+        <p class="subtitle">Track your daily progress and stay accountable!</p>
         
         <div class="stats">
             <div class="stat-card">
                 <h3>Current Day</h3>
-                <div class="value" id="currentDay">0</div>
+                <div class="value" id="currentDay">1</div>
             </div>
             <div class="stat-card">
                 <h3>Toby's Total Penalties</h3>
@@ -288,7 +289,7 @@
         };
 
         let trackerData = {
-            currentDay: 1,
+            currentDay: 0,
             days: []
         };
 
@@ -318,7 +319,7 @@
         }
 
         function addNewDay() {
-            const dayNum = trackerData.currentDay;
+            const dayNum = trackerData.currentDay + 1;
             const dayData = initializeDay(dayNum);
             trackerData.days.push(dayData);
             trackerData.currentDay++;
@@ -481,7 +482,7 @@
                 trackerData.days.forEach((day, i) => {
                     day.day = i + 1;
                 });
-                trackerData.currentDay = trackerData.days.length + 1;
+                trackerData.currentDay = trackerData.days.length;
                 saveData();
                 renderTracker();
             }
@@ -489,9 +490,6 @@
 
         // Initialize
         loadData();
-        if (trackerData.days.length === 0) {
-            addNewDay();
-        }
     </script>
 </body>
 </html>

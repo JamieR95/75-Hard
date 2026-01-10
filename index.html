@@ -34,11 +34,22 @@
             font-size: 2.5em;
         }
         
-        .subtitle {
+        .sync-status {
             text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .sync-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .sync-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
         }
         
         .stats {
@@ -84,19 +95,6 @@
         .person-header h2 {
             color: #667eea;
             font-size: 1.5em;
-        }
-        
-        .person-stats {
-            display: flex;
-            gap: 20px;
-            font-size: 0.9em;
-        }
-        
-        .person-stats span {
-            padding: 5px 15px;
-            background: white;
-            border-radius: 20px;
-            font-weight: bold;
         }
         
         .day-entry {
@@ -252,12 +250,15 @@
 <body>
     <div class="container">
         <h1>🏆 75 Days Challenge: Toby vs Jamie</h1>
-        <p class="subtitle">Track your daily progress and stay accountable!</p>
+        
+        <div id="syncStatus" class="sync-status disconnected">
+            🔄 Connecting to Firebase...
+        </div>
         
         <div class="stats">
             <div class="stat-card">
                 <h3>Current Day</h3>
-                <div class="value" id="currentDay">1</div>
+                <div class="value" id="currentDay">0</div>
             </div>
             <div class="stat-card">
                 <h3>Toby's Total Penalties</h3>
@@ -280,7 +281,24 @@
         <button class="export-btn" onclick="exportData()">💾 Export Progress</button>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdbjWtFMvQv2rjLcweJxo9AhYm6YwhIcM",
+            authDomain: "days-challenge-3040f.firebaseapp.com",
+            databaseURL: "https://days-challenge-3040f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "days-challenge-3040f",
+            storageBucket: "days-challenge-3040f.firebasestorage.app",
+            messagingSenderId: "764631012094",
+            appId: "1:764631012094:web:f1a3b8f163ddc0e5accbaf"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const trackerRef = ref(database, 'challengeTracker');
+
         const tasks = {
             exercise: [
                 "Hard exercise session",
@@ -291,7 +309,7 @@
             diet: [
                 "No sweets/chocolate/energy drinks/crisps/fast food",
                 "3 liters of water",
-                "Jamie: calorie goal"
+                "Jamie: 3 meals max + stay under calorie goal"
             ],
             activities: [
                 "Read 30 mins",
@@ -304,6 +322,32 @@
             currentDay: 0,
             days: []
         };
+
+        // Listen for real-time updates from Firebase
+        onValue(trackerRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                trackerData = data;
+                renderTracker();
+                updateSyncStatus(true);
+            } else {
+                updateSyncStatus(true);
+            }
+        }, (error) => {
+            console.error("Firebase error:", error);
+            updateSyncStatus(false);
+        });
+
+        function updateSyncStatus(connected) {
+            const statusEl = document.getElementById('syncStatus');
+            if (connected) {
+                statusEl.className = 'sync-status connected';
+                statusEl.textContent = '✅ Synced with Firebase - Changes update in real-time!';
+            } else {
+                statusEl.className = 'sync-status disconnected';
+                statusEl.textContent = '❌ Connection error - Check your internet';
+            }
+        }
 
         function initializeDay(dayNum) {
             const dayData = {
@@ -318,7 +362,6 @@
 
             Object.keys(tasks).forEach(category => {
                 tasks[category].forEach(task => {
-                    // Skip Jamie-specific task for Toby
                     if (task.includes('Jamie:')) {
                         dayData.jamie[task] = false;
                     } else {
@@ -328,20 +371,18 @@
                 });
             });
 
-            // Active rest day (not checked by default, optional)
             dayData.toby['Active rest day'] = false;
             dayData.jamie['Active rest day'] = false;
 
             return dayData;
         }
 
-        function addNewDay() {
+        window.addNewDay = function() {
             const dayNum = trackerData.currentDay + 1;
             const dayData = initializeDay(dayNum);
             trackerData.days.push(dayData);
             trackerData.currentDay++;
             saveData();
-            renderTracker();
         }
 
         function renderTracker() {
@@ -414,7 +455,6 @@
             const isChecked = dayData[person][task];
             const taskId = `${person}-${dayIndex}-${task.replace(/\s+/g, '-')}`;
             
-            // Check if this is an active rest day and if task should be disabled
             const isActiveRestDay = dayData[person]['Active rest day'];
             const shouldDisable = isActiveRestDay && (task === 'Hard exercise session' || task === 'Light exercise session');
             
@@ -430,15 +470,10 @@
             `;
         }
 
-        function toggleTask(person, task, dayIndex) {
+        window.toggleTask = function(person, task, dayIndex) {
             trackerData.days[dayIndex][person][task] = !trackerData.days[dayIndex][person][task];
-            
-            // Active rest day logic is now handled in calculatePenalties
-            // The visual disabled state is handled in createTaskCheckbox
-            
             calculatePenalties(dayIndex);
             saveData();
-            renderTracker();
         }
 
         function calculatePenalties(dayIndex) {
@@ -449,12 +484,10 @@
                 const isActiveRestDay = dayData[person]['Active rest day'];
                 
                 Object.keys(dayData[person]).forEach(task => {
-                    // Skip Active rest day - it's optional (1x per week)
                     if (task === 'Active rest day') {
                         return;
                     }
                     
-                    // On active rest days, don't count hard/light exercise as failures
                     if (isActiveRestDay && (task === 'Hard exercise session' || task === 'Light exercise session')) {
                         return;
                     }
@@ -485,18 +518,13 @@
         }
 
         function saveData() {
-            localStorage.setItem('challengeTracker', JSON.stringify(trackerData));
+            set(trackerRef, trackerData).catch((error) => {
+                console.error("Error saving to Firebase:", error);
+                alert("Failed to save data. Check your internet connection.");
+            });
         }
 
-        function loadData() {
-            const saved = localStorage.getItem('challengeTracker');
-            if (saved) {
-                trackerData = JSON.parse(saved);
-                renderTracker();
-            }
-        }
-
-        function exportData() {
+        window.exportData = function() {
             let csvContent = "Day,Person,Task,Completed,Penalty,Punishment\n";
             
             trackerData.days.forEach(day => {
@@ -515,21 +543,16 @@
             a.click();
         }
 
-        function deleteDay(index) {
+        window.deleteDay = function(index) {
             if (confirm(`Are you sure you want to delete Day ${trackerData.days[index].day}? This cannot be undone.`)) {
                 trackerData.days.splice(index, 1);
-                // Recalculate day numbers
                 trackerData.days.forEach((day, i) => {
                     day.day = i + 1;
                 });
                 trackerData.currentDay = trackerData.days.length;
                 saveData();
-                renderTracker();
             }
         }
-
-        // Initialize
-        loadData();
     </script>
 </body>
 </html>

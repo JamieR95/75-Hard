@@ -340,11 +340,11 @@
             exercise: [
                 "Hard exercise session",
                 "Light exercise session",
-                "Mobility/foam rolling/stretching",
+                "Mobility - foam rolling - stretching",
                 "10k steps"
             ],
             diet: [
-                "No sweets/chocolate/energy drinks/crisps/fast food",
+                "No sweets - chocolate - energy drinks - crisps - fast food",
                 "3 liters of water",
                 "Jamie: 3 meals max + stay under calorie goal"
             ],
@@ -557,8 +557,7 @@
         }
 
         function saveData() {
-            const encodedData = encodeDataForFirebase(trackerData);
-            set(trackerRef, encodedData).catch((error) => {
+            set(trackerRef, trackerData).catch((error) => {
                 console.error("Error saving to Firebase:", error);
                 alert("Failed to save data. Check your internet connection.");
             });

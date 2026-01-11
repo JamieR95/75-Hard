@@ -299,6 +299,43 @@
         const database = getDatabase(app);
         const trackerRef = ref(database, 'challengeTracker');
 
+        // Helper functions to encode/decode task names for Firebase
+        function encodeTaskName(task) {
+            return task.replace(/\//g, '|||').replace(/\./g, '~~~');
+        }
+
+        function decodeTaskName(task) {
+            return task.replace(/\|\|\|/g, '/').replace(/~~~/g, '.');
+        }
+
+        function encodeDataForFirebase(data) {
+            const encoded = JSON.parse(JSON.stringify(data));
+            encoded.days.forEach(day => {
+                ['toby', 'jamie'].forEach(person => {
+                    const newObj = {};
+                    Object.keys(day[person]).forEach(task => {
+                        newObj[encodeTaskName(task)] = day[person][task];
+                    });
+                    day[person] = newObj;
+                });
+            });
+            return encoded;
+        }
+
+        function decodeDataFromFirebase(data) {
+            const decoded = JSON.parse(JSON.stringify(data));
+            decoded.days.forEach(day => {
+                ['toby', 'jamie'].forEach(person => {
+                    const newObj = {};
+                    Object.keys(day[person]).forEach(task => {
+                        newObj[decodeTaskName(task)] = day[person][task];
+                    });
+                    day[person] = newObj;
+                });
+            });
+            return decoded;
+        }
+
         const tasks = {
             exercise: [
                 "Hard exercise session",
@@ -327,7 +364,7 @@
         onValue(trackerRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                trackerData = data;
+                trackerData = decodeDataFromFirebase(data);
                 renderTracker();
                 updateSyncStatus(true);
             } else {
@@ -520,7 +557,8 @@
         }
 
         function saveData() {
-            set(trackerRef, trackerData).catch((error) => {
+            const encodedData = encodeDataForFirebase(trackerData);
+            set(trackerRef, encodedData).catch((error) => {
                 console.error("Error saving to Firebase:", error);
                 alert("Failed to save data. Check your internet connection.");
             });

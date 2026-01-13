@@ -350,6 +350,7 @@
             ],
             activities: [
                 "Read 30 mins",
+                "Toby: Read 5 mins",
                 "Progress pic",
                 "Study 2hrs"
             ]
@@ -399,12 +400,21 @@
 
             Object.keys(tasks).forEach(category => {
                 tasks[category].forEach(task => {
-                    if (task.includes('Jamie:')) {
-                        dayData.jamie[task] = false;
-                    } else {
-                        dayData.toby[task] = false;
-                        dayData.jamie[task] = false;
+                    // Skip person-specific tasks for the other person
+                    if (task.includes('Jamie:') && person === 'toby') {
+                        return;
                     }
+                    if (task.includes('Toby:') && person === 'jamie') {
+                        return;
+                    }
+                    if (task === "Read 30 mins" && person === 'toby') {
+                        return;
+                    }
+                    if (task === "Toby: Read 5 mins" && person === 'jamie') {
+                        return;
+                    }
+                    
+                    dayData[person][task] = false;
                 });
             });
 
@@ -482,6 +492,9 @@
 
             html += '<div class="category-title">📚 Activities</div><div class="tasks-grid">';
             tasks.activities.forEach(task => {
+                // Skip Jamie's 30 min reading for Toby, skip Toby's 5 min reading for Jamie
+                if (task === "Read 30 mins" && person === 'toby') return;
+                if (task === "Toby: Read 5 mins" && person === 'jamie') return;
                 html += createTaskCheckbox(person, task, dayData, dayIndex);
             });
             html += '</div>';

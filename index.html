@@ -413,6 +413,9 @@
                     if (task === "Toby: Read 5 mins" && person === 'jamie') {
                         return;
                     }
+                    if (task === "10k steps" && person === 'jamie') {
+                        return;
+                    }
                     
                     dayData[person][task] = false;
                 });
@@ -478,6 +481,8 @@
             
             html += '<div class="category-title">💪 Exercise</div><div class="tasks-grid">';
             tasks.exercise.forEach(task => {
+                // Skip 10k steps for Jamie
+                if (task === "10k steps" && person === 'jamie') return;
                 html += createTaskCheckbox(person, task, dayData, dayIndex);
             });
             html += createTaskCheckbox(person, 'Active rest day', dayData, dayIndex);

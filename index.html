@@ -341,7 +341,8 @@
                 "Hard exercise session",
                 "Light exercise session",
                 "Mobility - foam rolling - stretching",
-                "10k steps"
+                "10k steps",
+                "Jamie: 7k steps"
             ],
             diet: [
                 "No sweets - chocolate - energy drinks - crisps - fast food",
@@ -408,9 +409,6 @@
                         return;
                     }
                     if (task === "Read 30 mins" && person === 'toby') {
-                        return;
-                    }
-                    if (task === "Toby: Read 5 mins" && person === 'jamie') {
                         return;
                     }
                     if (task === "10k steps" && person === 'jamie') {
@@ -481,8 +479,9 @@
             
             html += '<div class="category-title">💪 Exercise</div><div class="tasks-grid">';
             tasks.exercise.forEach(task => {
-                // Skip 10k steps for Jamie
+                // Skip 10k steps for Jamie, skip 7k steps for Toby
                 if (task === "10k steps" && person === 'jamie') return;
+                if (task === "Jamie: 7k steps" && person === 'toby') return;
                 html += createTaskCheckbox(person, task, dayData, dayIndex);
             });
             html += createTaskCheckbox(person, 'Active rest day', dayData, dayIndex);

@@ -399,23 +399,18 @@
                 jamiePunishment: false
             };
 
+            // Initialize tasks for each person, skipping person-specific tasks
             Object.keys(tasks).forEach(category => {
                 tasks[category].forEach(task => {
-                    // Skip person-specific tasks for the other person
-                    if (task.includes('Jamie:') && person === 'toby') {
-                        return;
-                    }
-                    if (task.includes('Toby:') && person === 'jamie') {
-                        return;
-                    }
-                    if (task === "Read 30 mins" && person === 'toby') {
-                        return;
-                    }
-                    if (task === "10k steps" && person === 'jamie') {
-                        return;
+                    // Handle Toby's tasks
+                    if (!task.includes('Jamie:') && task !== 'Read 30 mins' && task !== 'Jamie: 7k steps') {
+                        dayData.toby[task] = false;
                     }
                     
-                    dayData[person][task] = false;
+                    // Handle Jamie's tasks
+                    if (!task.includes('Toby:') && task !== 'Toby: Read 5 mins' && task !== '10k steps') {
+                        dayData.jamie[task] = false;
+                    }
                 });
             });
 
@@ -426,12 +421,17 @@
         }
 
         window.addNewDay = function() {
-            const dayNum = trackerData.currentDay + 1;
-            const dayData = initializeDay(dayNum);
-            trackerData.days.push(dayData);
-            trackerData.currentDay++;
-            saveData();
-            renderTracker();
+            try {
+                const dayNum = trackerData.currentDay + 1;
+                const dayData = initializeDay(dayNum);
+                trackerData.days.push(dayData);
+                trackerData.currentDay++;
+                saveData();
+                renderTracker();
+            } catch (error) {
+                console.error("Error adding new day:", error);
+                alert("Error adding new day: " + error.message);
+            }
         }
 
         function renderTracker() {
@@ -508,19 +508,26 @@
 
         function createTaskCheckbox(person, task, dayData, dayIndex) {
             const isChecked = dayData[person][task];
-            const taskId = `${person}-${dayIndex}-${task.replace(/\s+/g, '-')}`;
+            const taskId = `${person}-${dayIndex}-${task.replace(/\s+/g, '-').replace(/:/g, '')}`;
             
             const isActiveRestDay = dayData[person]['Active rest day'];
+            const hardDone = dayData[person]['Hard exercise session'];
+            const lightDone = dayData[person]['Light exercise session'];
+            
+            // Disable hard/light if active rest day is checked
             const shouldDisable = isActiveRestDay && (task === 'Hard exercise session' || task === 'Light exercise session');
             
+            // Disable active rest day if both hard and light workouts are done
+            const disableRestDay = task === 'Active rest day' && hardDone && lightDone;
+            
             return `
-                <div class="task-item ${isChecked ? 'completed' : ''} ${shouldDisable ? 'disabled' : ''}" 
-                     onclick="${shouldDisable ? '' : `document.getElementById('${taskId}').click()`}">
+                <div class="task-item ${isChecked ? 'completed' : ''} ${shouldDisable || disableRestDay ? 'disabled' : ''}" 
+                     onclick="${shouldDisable || disableRestDay ? '' : `document.getElementById('${taskId}').click()`}">
                     <input type="checkbox" id="${taskId}" 
                            ${isChecked ? 'checked' : ''} 
-                           ${shouldDisable ? 'disabled' : ''}
+                           ${shouldDisable || disableRestDay ? 'disabled' : ''}
                            onchange="toggleTask('${person}', '${task}', ${dayIndex}); event.stopPropagation();">
-                    <label for="${taskId}">${task}${shouldDisable ? ' (Rest Day)' : ''}</label>
+                    <label for="${taskId}">${task}${shouldDisable ? ' (Rest Day)' : ''}${disableRestDay ? ' (Workouts Done)' : ''}</label>
                 </div>
             `;
         }

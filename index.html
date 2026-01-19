@@ -438,7 +438,9 @@
             const container = document.getElementById('tracker');
             container.innerHTML = '';
 
-            trackerData.days.forEach((dayData, index) => {
+            // Reverse the array to show newest days first
+            [...trackerData.days].reverse().forEach((dayData, reverseIndex) => {
+                const index = trackerData.days.length - 1 - reverseIndex;
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'tracker-section';
                 dayDiv.innerHTML = `
